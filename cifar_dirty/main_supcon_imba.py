@@ -6,7 +6,7 @@ import argparse
 import time
 import math
 
-import tensorboard_logger as tb_logger
+# import tensorboard_logger as tb_logger
 import torch
 import torch.backends.cudnn as cudnn
 from torchvision import transforms
@@ -19,7 +19,7 @@ from util import set_optimizer, save_model
 from util import align_loss, uniform_loss
 from networks.resnet_big import SupConResNet
 from networks.resnet_small import SupConResNet_s
-from losses import SupConLoss
+from tsc_cifar_loss import SupConLoss
 import json
 import numpy as np
 import random
@@ -402,6 +402,7 @@ def loop(loader, model, criterion, optimizer, epoch, opt, train=True, train_data
             warmup_learning_rate(opt, epoch, idx, len(loader), optimizer)
 
         # compute loss
+        # features_contrast -> 일반적인 Feat
         features_contrast, features = model(images)
         features_contrast_original = features_contrast.clone()
         if opt.no_simclr:
@@ -448,9 +449,9 @@ def loop(loader, model, criterion, optimizer, epoch, opt, train=True, train_data
                     target_mask[:-target_labels.size(0)] = 0
                 else:
                     target_mask = None
-                # target_index = torch.ones_like(labels).squeeze()
-                # target_index[:-target_labels.size(0)] = 0
-                target_index = None
+                target_index = torch.ones_like(labels).squeeze()
+                target_index[:-target_labels.size(0)] = 0
+                # target_index = None
             else:
                 features_contrast = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
                 target_mask = None
@@ -550,7 +551,7 @@ def stage1(opt):
     optimizer = set_optimizer(opt, model)
 
     # tensorboard
-    logger = tb_logger.Logger(logdir=opt.tb_folder, flush_secs=2)
+    # logger = tb_logger.Logger(logdir=opt.tb_folder, flush_secs=2)
 
     # training routine
     for epoch in range(1, opt.epochs + 1):
@@ -573,16 +574,16 @@ def stage1(opt):
             exit(0)
 
         # tensorboard logger
-        logger.log_value('loss', loss, epoch)
-        logger.log_value('train_alignment', train_alignment, epoch)
-        logger.log_value('train_class_alignment', train_class_alignment, epoch)
-        logger.log_value('train_uniformity', train_uniformity, epoch)
-        logger.log_value('train_class_uniformity', train_class_uniformity, epoch)
-        logger.log_value('val_alignment', val_alignment, epoch)
-        logger.log_value('val_class_alignment', val_class_alignment, epoch)
-        logger.log_value('val_uniformity', val_uniformity, epoch)
-        logger.log_value('val_class_uniformity', val_class_uniformity, epoch)
-        logger.log_value('learning_rate', optimizer.param_groups[0]['lr'], epoch)
+        # logger.log_value('loss', loss, epoch)
+        # logger.log_value('train_alignment', train_alignment, epoch)
+        # logger.log_value('train_class_alignment', train_class_alignment, epoch)
+        # logger.log_value('train_uniformity', train_uniformity, epoch)
+        # logger.log_value('train_class_uniformity', train_class_uniformity, epoch)
+        # logger.log_value('val_alignment', val_alignment, epoch)
+        # logger.log_value('val_class_alignment', val_class_alignment, epoch)
+        # logger.log_value('val_uniformity', val_uniformity, epoch)
+        # logger.log_value('val_class_uniformity', val_class_uniformity, epoch)
+        # logger.log_value('learning_rate', optimizer.param_groups[0]['lr'], epoch)
 
         if epoch % opt.save_freq == 0:
             save_file = os.path.join(
